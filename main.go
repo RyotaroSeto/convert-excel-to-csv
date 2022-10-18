@@ -15,8 +15,21 @@ func main() {
 	r := gin.Default()
 	r.POST("/:filename", func(c *gin.Context) {
 		fn := c.Param("filename")
+
+		if err := ValidateParam(fn); err != nil {
+			log.Println(err)
+			c.JSON(404, gin.H{"message": "エラーです。"})
+		}
+
+		if _, err := os.Stat("./file/" + fn + ".xlsx"); err != nil {
+			log.Println(err)
+			c.JSON(404, gin.H{"message": "エラーです。"})
+		}
+
 		if err := ExcelToCSV(os.Stdout, "./file/"+fn+".xlsx", 0); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			log.Println(err)
+			c.JSON(404, gin.H{"message": "エラーです。"})
+
 		}
 		c.JSON(200, gin.H{"message": "ExcelからCSVファイルにエクスポート成功"})
 	})
@@ -26,6 +39,13 @@ func main() {
 	if err := r.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ValidateParam(fn string) error {
+	if fn == "" {
+		return fmt.Errorf("パラメータが不正です。")
+	}
+	return nil
 }
 
 func ExcelToCSV(w io.Writer, path string, sheetIndex int) error {
