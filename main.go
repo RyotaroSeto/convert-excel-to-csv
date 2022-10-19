@@ -18,26 +18,23 @@ func main() {
 
 		if err := ValidateParam(fn); err != nil {
 			log.Println(err)
-			c.JSON(404, createErrResponse("400", "100"))
-			return
+			c.JSON(404, gin.H{"message": "エラーです。"})
 		}
 
 		if _, err := os.Stat("./file/" + fn + ".xlsx"); err != nil {
 			log.Println(err)
-			c.JSON(404, createErrResponse("400", "100"))
-			return
+			c.JSON(404, gin.H{"message": "エラーです。"})
 		}
 
 		if err := ExcelToCSV(os.Stdout, "./file/"+fn+".xlsx", 0); err != nil {
 			log.Println(err)
-			c.JSON(404, createErrResponse("400", "100"))
-			return
+			c.JSON(404, gin.H{"message": "エラーです。"})
 
 		}
 		c.JSON(200, gin.H{"message": "ExcelからCSVファイルにエクスポート成功"})
 	})
 	r.NoRoute(func(c *gin.Context) {
-		c.JSON(404, createErrResponse("404", "102"))
+		c.JSON(404, gin.H{"message": "Not Found"})
 	})
 	if err := r.Run(); err != nil {
 		log.Fatal(err)
@@ -62,7 +59,7 @@ func ExcelToCSV(w io.Writer, path string, sheetIndex int) error {
 	}
 	csvw := csv.NewWriter(w)
 	defer csvw.Flush()
-	csvFile, err := os.Create("./output/data.csv")
+	csvFile, err := os.Create("./data.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
