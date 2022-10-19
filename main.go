@@ -15,17 +15,40 @@ func main() {
 	r := gin.Default()
 	r.POST("/:filename", func(c *gin.Context) {
 		fn := c.Param("filename")
+
+		if err := ValidateParam(fn); err != nil {
+			log.Println(err)
+			c.JSON(404, createErrResponse("400", "100"))
+			return
+		}
+
+		if _, err := os.Stat("./file/" + fn + ".xlsx"); err != nil {
+			log.Println(err)
+			c.JSON(404, createErrResponse("400", "100"))
+			return
+		}
+
 		if err := ExcelToCSV(os.Stdout, "./file/"+fn+".xlsx", 0); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			log.Println(err)
+			c.JSON(404, createErrResponse("400", "100"))
+			return
+
 		}
 		c.JSON(200, gin.H{"message": "ExcelからCSVファイルにエクスポート成功"})
 	})
 	r.NoRoute(func(c *gin.Context) {
-		c.JSON(404, gin.H{"message": "Not Found"})
+		c.JSON(404, createErrResponse("404", "102"))
 	})
 	if err := r.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ValidateParam(fn string) error {
+	if fn == "" {
+		return fmt.Errorf("パラメータが不正です。")
+	}
+	return nil
 }
 
 func ExcelToCSV(w io.Writer, path string, sheetIndex int) error {
@@ -39,7 +62,7 @@ func ExcelToCSV(w io.Writer, path string, sheetIndex int) error {
 	}
 	csvw := csv.NewWriter(w)
 	defer csvw.Flush()
-	csvFile, err := os.Create("./data.csv")
+	csvFile, err := os.Create("./output/data.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
